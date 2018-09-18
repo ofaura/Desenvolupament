@@ -1,5 +1,5 @@
-#ifndef VEC3_H
-#define VEC3_H
+#ifndef _VEC3_H
+#define _VEC3_H
 
 #include <math.h>
 
@@ -13,70 +13,52 @@ public:
 
 	vec3() {}
 
-	vec3(T i, T j, T k)
-	{
-		x = i;
-		y = j;
-		z = k;
-	}
+	vec3(T x, T y, T z) :x(x), y(y), z(z) {}
 
-	vec3(const vec3& vec)
-	{
-		x = vec.x;
-		y = vec.y;
-		z = vec.z;
-	}
+	vec3(const vec3& vector) : x(vector.x), y(vec.y), z(vector.z) {}
 
 	~vec3() {}
 
 public:
 	
-	vec3 operator+ (const vec3 vec) const 
+	vec3 operator+ (const vec3 vector) const
 	{
-		vec3 ret;
-
-		ret.x = x + vec.x;
-		ret.y = y + vec.y;
-		ret.z = z + vec.z;
-
-		return ret;
+		return vec3(x + vector.x, y + vector.y, z + vector.z);
 	}
 
-	vec3 operator- (const vec3 vec) const 
+	vec3 operator- (const vec3 vector) const
 	{
-		vec3 ret;
-
-		ret.x = x - vec.x;
-		ret.y = y - vec.y;
-		ret.z = z - vec.z;
-
-		return ret;
+		return vec3(x - vector.x, y - vector.y, z - vector.z);
 	}
 
-	void operator+= (const vec3 vec) const 
+	vec3 operator+= (const vec3 &vector) 
 	{
-		x += vec.x;
-		y += vec.y;
-		z += vec.z;
+		this->x += vector.x;
+		this->y += vector.y;
+		this->z += vector.z;
+
+		return *this;
 	}
 
-	void operator-= (const vec3 vec) const 
+	vec3 operator-= (const vec3 &vector)
 	{
-		x -= vec.x;
-		y -= vec.y;
-		z -= vec.z;
+		this->x -= vector.x;
+		this->y -= vector.y;
+		this->z -= vector.z;
+
+		return *this;
 	}
 
-	void operator= (const vec3 vec) const 
+	void operator= (const vec3 vector) const
 	{
-		x = vec.x;
-		y = vec.y;
-		z = vec.z;
+		x = vector.x;
+		y = vector.y;
+		z = vector.z;
 	}
 
-	bool operator== (const vec3 vec) const 
+	bool operator== (const vec3 vector) const
 	{
-		return vec.x == x && vec.y == y && vec.z == z;
+		return vector.x == x && vector.y == y && vector.z == z;
 	}
 
 public:
@@ -95,16 +77,29 @@ public:
 		x = y = z = 0;
 	}
 
-	bool is_zero() 
+	bool is_zero const() 
 	{
 		return x == 0 && y == 0 && z == 0;
 	}
 
-	T distance_to( const vec3 vec) 
+	T distance_to( const vec3 vector)
 	{
-		return sqrt((vec.x - x)*(vec.x - x) + (vec.y - y)*(vec.y - y) + (vec.z - z)*(vec.z - z));
+		return sqrt((vector.x - x)*(vector.x - x) + (vector.y - y)*(vector.y - y) + (vector.z - z)*(vector.z - z));
 	}
 
 };
 
-#endif // VEC3_H
+#endif // _VEC3_H
+
+
+
+
+
+
+
+
+
+
+
+
+//JA! deez nuts 
