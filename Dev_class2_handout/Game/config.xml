@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<config>
+  
+  <app>
+    <title>4 balls with epic music</title>
+  </app>
+
+  <renderer>
+    <vsync> false</vsync>
+  </renderer>
+
+  <audio>
+
+  </audio>
+
+  <input>
+    
+  </input>
+  
+  <textures>
+
+  </textures>
+
+  <window>
+    
+    <fullscreen> 0 </fullscreen>
+    <borderless> 0 </borderless>
+    <resizable> 1 </resizable>
+    <fullscreen_window> 0 </fullscreen_window>
+    <width> 1024 </width>
+    <height> 768 </height>
+    <scale> 1 </scale>
+
+  </window>
+
+</config>
