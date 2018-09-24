@@ -1,5 +1,6 @@
 #include <iostream>
 #include "vec3.h"
+#include "string.h"
 
 using namespace std;
 
