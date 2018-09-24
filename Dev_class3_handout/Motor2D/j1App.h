@@ -63,9 +63,15 @@ public:
 
 private:
 
-	void real_save();
+	void j1App::real_save()
+	{
+		Savegame();
+	}
 
-	void real_load();
+	void j1App::real_load()
+	{
+		Loadgame();
+	}
 
 	// Load config file
 	bool LoadConfig();
@@ -84,6 +90,9 @@ private:
 
 	// Call modules after each loop iteration
 	bool PostUpdate();
+
+	bool Loadgame();
+	bool Savegame() const;
 
 public:
 
@@ -105,12 +114,18 @@ private:
 	pugi::xml_node		app_config;
 	int					argc;
 	char**				args;
+	
+	pugi::xml_document	xml_doc;
+	pugi::xml_node		xml_node;
 
 	p2SString			title;
 	p2SString			organization;
 
-	bool must_save = false;
+	mutable bool must_save = false;
 	bool must_load = false;
+
+	p2SString			load_game;
+	mutable p2SString	save_game;
 };
 
 extern j1App* App;
