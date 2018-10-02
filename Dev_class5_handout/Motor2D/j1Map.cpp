@@ -32,7 +32,23 @@ void j1Map::Draw()
 		return;
 
 	// TODO 5: Prepare the loop to draw all tilesets + Blit
+	MapLayer* layer = data.layers.start->data;
+	TileSet* tileset = data.tilesets.start->data;
 
+	for (int y = 0; y < layer->height; ++y)
+	{
+		for (int x = 0; x < layer->width; ++x)
+		{
+			uint gid = layer->data[(y*layer->width)+x];
+
+			SDL_Rect rect = tileset->GetTileRect(gid);
+
+			App->render->Blit(tileset->texture, x*tileset->tile_width, y*tileset->tile_height, &rect);
+
+		}
+	}
+	
+	
 		// TODO 9: Complete the draw function
 
 }
@@ -136,6 +152,14 @@ bool j1Map::Load(const char* file_name)
 
 	// TODO 4: Iterate all layers and load each of them
 	// Load layer info ----------------------------------------------
+	pugi::xml_node layer;
+
+	for (layer = map_file.child("map").child("layer"); layer && ret; layer = layer.next_sibling("layer"))
+	{
+		MapLayer* lay = new MapLayer;
+		LoadLayer(layer, lay);
+		data.layers.add(lay);
+	}
 
 
 	if(ret == true)
@@ -157,7 +181,7 @@ bool j1Map::Load(const char* file_name)
 
 		// TODO 4: Add info here about your loaded layers
 		// Adapt this vcode with your own variables
-		/*
+		
 		p2List_item<MapLayer*>* item_layer = data.layers.start;
 		while(item_layer != NULL)
 		{
@@ -166,7 +190,7 @@ bool j1Map::Load(const char* file_name)
 			LOG("name: %s", l->name.GetString());
 			LOG("tile width: %d tile height: %d", l->width, l->height);
 			item_layer = item_layer->next;
-		}*/
+		}
 	}
 
 	map_loaded = ret;
@@ -304,10 +328,20 @@ bool j1Map::LoadTilesetImage(pugi::xml_node& tileset_node, TileSet* set)
  //TODO 3: Create the definition for a function that loads a single layer
 bool j1Map::LoadLayer(pugi::xml_node& node, MapLayer* layer)
 {
-	layer->name.create(node.attribute("name").as_string());
+	layer->name = node.attribute("name").as_string();
 	layer->width = node.attribute("width").as_uint();
 	layer->height = node.attribute("height").as_uint();
 	layer->data = new uint[layer->width * layer->height];
 
-	memset(layer->data, 0, 4);
+	memset(layer->data, 0, sizeof(uint)*layer->height*layer->width);
+
+	int i = 0;
+
+	for (pugi::xml_node tileset = map_file.child("map").child("tile"); tileset; tileset = tileset.next_sibling("tile"))
+	{
+		layer->data[i++] = node.attribute("gid").as_uint(0);
+		node = node.next_sibling("tile");
+	}
+
+	return true;
 }
