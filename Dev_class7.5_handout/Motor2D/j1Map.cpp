@@ -39,36 +39,31 @@ void j1Map::PropagateBFS()
 {
 	// TODO 1: If frontier queue contains elements
 	// pop the last one and calculate its 4 neighbors
-	iPoint tile_neightbors[4];
+	
+	p2List<iPoint> tile_neightbors;
+	
 	if (frontier.start != nullptr)
 	{
-		iPoint tile;
+		iPoint tile = frontier.GetLast()->data;
 		frontier.Pop(tile);
-		
-		for (int i = 0; i < 4; ++i)
-		{
-			tile_neightbors[i] = tile;
-		}
 
-		int i = 0;
-		tile_neightbors[i++] += {0, 1};
-		tile_neightbors[i++] += {0, -1};
-		tile_neightbors[i++] += {1, 0};
-		tile_neightbors[i++] += {-1, 0};
+		tile_neightbors.add({ tile.x - 1, tile.y });
+		tile_neightbors.add({ tile.x + 1, tile.y });
+		tile_neightbors.add({ tile.x, tile.y + 1 });
+		tile_neightbors.add({ tile.x, tile.y - 1 });
 	}
-
 
 	// TODO 2: For each neighbor, if not visited, add it
 	// to the frontier queue and visited list
 
-	for (int i = 0; i < 4; ++i)
+	for (p2List_item<iPoint>* neighbor = tile_neightbors.start; neighbor; neighbor = neighbor->next)
 	{
-		if (visited.find(tile_neightbors[i]) == -1)
+		if (visited.find(neighbor->data) == -1 && IsWalkable(neighbor->data.x, neighbor->data.y))
 		{
-			frontier.Push(tile_neightbors[i]);
-			visited.add(tile_neightbors[i]);
+			frontier.Push(neighbor->data);
+			visited.add(neighbor->data);
 		}
-	}
+	}	
 }
 
 void j1Map::DrawBFS()
@@ -109,9 +104,31 @@ bool j1Map::IsWalkable(int x, int y) const
 {
 	// TODO 3: return true only if x and y are within map limits
 	// and the tile is walkable (tile id 0 in the navigation layer)
+	
+	bool ret = false;
 
+	p2List_item<MapLayer*>* walk_layer = nullptr;
+	
+	for (p2List_item<MapLayer*>* layer = data.layers.start; layer; layer = layer->next)
+	{
+		for (p2List_item<Properties::Property*>* item = layer->data->properties.list.start; item; item = item->next)
+		{
+			if (item->data->name == "Navigation" && item->data->value == 1)
+			{
+				walk_layer = layer;
+			}
+		}
+	}
 
-	return true;
+	if (x >= 0 && x < data.width && y >= 0 && y < data.height)
+	{
+		if (walk_layer->data->Get(x, y) == 0)
+		{
+			ret = true;
+		}
+	}
+
+	return ret;
 }
 
 void j1Map::Draw()
