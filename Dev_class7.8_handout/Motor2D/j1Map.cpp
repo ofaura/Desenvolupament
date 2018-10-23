@@ -69,6 +69,11 @@ void j1Map::PropagateDijkstra()
 	// TODO 3: Taking BFS as a reference, implement the Dijkstra algorithm
 	// use the 2 dimensional array "cost_so_far" to track the accumulated costs
 	// on each cell (is already reset to 0 automatically)
+
+	while (frontier.start != nullptr)
+	{
+
+	}
 }
 
 int j1Map::MovementCost(int x, int y) const
