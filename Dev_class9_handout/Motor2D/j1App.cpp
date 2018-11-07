@@ -3,6 +3,8 @@
 
 #include "p2Defs.h"
 #include "p2Log.h"
+#include "j1PerfTimer.h"
+#include "j1Timer.h"
 
 #include "j1Window.h"
 #include "j1Input.h"
@@ -98,6 +100,8 @@ bool j1App::Awake()
 		}
 	}
 
+	LOG("App Awake time: %f", timer.ReadSec());
+
 	return ret;
 }
 
@@ -113,6 +117,7 @@ bool j1App::Start()
 		ret = item->data->Start();
 		item = item->next;
 	}
+	LOG("App Start time: %f", timer.ReadSec());
 	return ret;
 }
 
@@ -174,12 +179,12 @@ void j1App::FinishUpdate()
 	// Amount of ms took the last update
 	// Amount of frames during the last second
 
-	float avg_fps = 0.0f;
-	float seconds_since_startup = 0.0f;
+	float avg_fps = perf_timer.ReadTicks() / perf_timer.ReadMs();
+	float seconds_since_startup = perf_timer.ReadMs() / 1000;
 	float dt = 0.0f;
 	uint32 last_frame_ms = 0;
 	uint32 frames_on_last_update = 0;
-	uint64 frame_count = 0;
+	uint64 frame_count = perf_timer.ReadTicks();
 
 	static char title[256];
 	sprintf_s(title, 256, "Av.FPS: %.2f Last Frame Ms: %02u Last sec frames: %i Last dt: %.3f Time since startup: %.3f Frame Count: %lu ",
@@ -215,7 +220,6 @@ bool j1App::DoUpdate()
 {
 	bool ret = true;
 	p2List_item<j1Module*>* item;
-	item = modules.start;
 	j1Module* pModule = NULL;
 
 	for(item = modules.start; item != NULL && ret == true; item = item->next)
@@ -265,6 +269,7 @@ bool j1App::CleanUp()
 		ret = item->data->CleanUp();
 		item = item->prev;
 	}
+	LOG("App CleanUp time: %f", timer.ReadSec());
 	return ret;
 }
 
