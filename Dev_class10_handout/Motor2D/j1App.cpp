@@ -14,14 +14,11 @@
 #include "j1Pathfinding.h"
 #include "j1App.h"
 
-// TODO 3: Measure the amount of ms that takes to execute:
-// App constructor, Awake, Start and CleanUp
-// LOG the result
-
-
 // Constructor
 j1App::j1App(int argc, char* args[]) : argc(argc), args(args)
 {
+	PERF_START(ptimer);
+
 	input = new j1Input();
 	win = new j1Window();
 	render = new j1Render();
@@ -43,6 +40,8 @@ j1App::j1App(int argc, char* args[]) : argc(argc), args(args)
 
 	// render last to swap buffer
 	AddModule(render);
+
+	PERF_PEEK(ptimer);
 }
 
 // Destructor
@@ -69,6 +68,8 @@ void j1App::AddModule(j1Module* module)
 // Called before render is available
 bool j1App::Awake()
 {
+	PERF_START(ptimer);
+
 	pugi::xml_document	config_file;
 	pugi::xml_node		config;
 	pugi::xml_node		app_config;
@@ -84,6 +85,10 @@ bool j1App::Awake()
 		app_config = config.child("app");
 		title.create(app_config.child("title").child_value());
 		organization.create(app_config.child("organization").child_value());
+
+		// TODO 1: Read from config file your framerate cap
+		framerate_cap = app_config.attribute("framerate_cap").as_uint();
+
 	}
 
 	if(ret == true)
@@ -98,7 +103,7 @@ bool j1App::Awake()
 		}
 	}
 
-	LOG("App Awake time: %f", perf_timer.ReadMs());
+	PERF_PEEK(ptimer);
 
 	return ret;
 }
@@ -106,6 +111,7 @@ bool j1App::Awake()
 // Called before the first frame
 bool j1App::Start()
 {
+	PERF_START(ptimer);
 	bool ret = true;
 	p2List_item<j1Module*>* item;
 	item = modules.start;
@@ -115,7 +121,10 @@ bool j1App::Start()
 		ret = item->data->Start();
 		item = item->next;
 	}
-	LOG("App Start time: %f", perf_timer.ReadMs());
+	startup_time.Start();
+
+	PERF_PEEK(ptimer);
+
 	return ret;
 }
 
@@ -159,6 +168,13 @@ pugi::xml_node j1App::LoadConfig(pugi::xml_document& config_file) const
 // ---------------------------------------------
 void j1App::PrepareUpdate()
 {
+	frame_count++;
+	last_sec_frame_count++;
+
+	// TODO 4: Calculate the dt: differential time since last frame
+
+
+	frame_time.Start();
 }
 
 // ---------------------------------------------
@@ -170,25 +186,32 @@ void j1App::FinishUpdate()
 	if(want_to_load == true)
 		LoadGameNow();
 
-	// TODO 4: Now calculate:
-	// Amount of frames since startup
-	// Amount of time since game start (use a low resolution timer)
-	// Average FPS for the whole game life
-	// Amount of ms took the last update
-	// Amount of frames during the last second
+	// Framerate calculations --
 
-	float avg_fps = perf_timer.ReadTicks() / perf_timer.ReadMs();
-	float seconds_since_startup = perf_timer.ReadMs() / 1000;
-	float dt = 0.0f;
-	uint32 last_frame_ms = 0;
-	uint32 frames_on_last_update = 0;
-	uint64 frame_count = perf_timer.ReadTicks();
+	if(last_sec_frame_time.Read() > 1000)
+	{
+		last_sec_frame_time.Start();
+		prev_last_sec_frame_count = last_sec_frame_count;
+		last_sec_frame_count = 0;
+	}
+
+	float avg_fps = float(frame_count) / startup_time.ReadSec();
+	float seconds_since_startup = startup_time.ReadSec();
+	uint32 last_frame_ms = frame_time.Read();
+	uint32 frames_on_last_update = prev_last_sec_frame_count;
 
 	static char title[256];
-	sprintf_s(title, 256, "Av.FPS: %.2f Last Frame Ms: %02u Last sec frames: %i Last dt: %.3f Time since startup: %.3f Frame Count: %lu ",
-			  avg_fps, last_frame_ms, frames_on_last_update, dt, seconds_since_startup, frame_count);
-
+	sprintf_s(title, 256, "Av.FPS: %.2f Last Frame Ms: %02u Last sec frames: %i  Time since startup: %.3f Frame Count: %lu ",
+			  avg_fps, last_frame_ms, frames_on_last_update, seconds_since_startup, frame_count);
 	App->win->SetTitle(title);
+
+	// TODO 2: Use SDL_Delay to make sure you get your capped framerate
+	delay.Start();
+	SDL_Delay(1000 / framerate_cap - last_frame_ms);
+
+	// TODO3: Measure accurately the amount of time it SDL_Delay actually waits compared to what was expected
+	LOG(" We waited for %d milliseconds and got back in %f", 1000 / framerate_cap - last_frame_ms, delay.ReadMs());
+
 }
 
 // Call modules before each loop iteration
@@ -218,6 +241,7 @@ bool j1App::DoUpdate()
 {
 	bool ret = true;
 	p2List_item<j1Module*>* item;
+	item = modules.start;
 	j1Module* pModule = NULL;
 
 	for(item = modules.start; item != NULL && ret == true; item = item->next)
@@ -228,6 +252,9 @@ bool j1App::DoUpdate()
 			continue;
 		}
 
+		// TODO 5: send dt as an argument to all updates
+		// you will need to update module parent class
+		// and all modules that use update
 		ret = item->data->Update();
 	}
 
@@ -258,6 +285,7 @@ bool j1App::PostUpdate()
 // Called before quitting
 bool j1App::CleanUp()
 {
+	PERF_START(ptimer);
 	bool ret = true;
 	p2List_item<j1Module*>* item;
 	item = modules.end;
@@ -267,7 +295,8 @@ bool j1App::CleanUp()
 		ret = item->data->CleanUp();
 		item = item->prev;
 	}
-	LOG("App CleanUp time: %f", perf_timer.ReadMs());
+
+	PERF_PEEK(ptimer);
 	return ret;
 }
 
@@ -290,12 +319,6 @@ const char* j1App::GetArgv(int index) const
 const char* j1App::GetTitle() const
 {
 	return title.GetString();
-}
-
-// ---------------------------------------
-float j1App::GetDT() const
-{
-	return 0.0f;
 }
 
 // ---------------------------------------
@@ -392,7 +415,7 @@ bool j1App::SavegameNow() const
 		data.save(stream);
 
 		// we are done, so write data to disk
-//		fs->Save(save_game.GetString(), stream.str().c_str(), stream.str().length());
+		//fs->Save(save_game.GetString(), stream.str().c_str(), stream.str().length());
 		LOG("... finished saving", save_game.GetString());
 	}
 	else
